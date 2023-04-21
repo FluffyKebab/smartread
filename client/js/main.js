@@ -1,7 +1,7 @@
 // class responsible for modifying the html document depending on the current route and data from the api
 class Index {
     constructor() {
-        this.currentFile = ""
+        this.api = new Api()
 
         this.router = new Router()
         this.router.addRoute("/", this.homeHandler.bind(this))

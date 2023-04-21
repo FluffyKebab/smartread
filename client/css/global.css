@@ -1,0 +1,20 @@
+html, body {
+    margin: 0;
+    height: 100%;
+    color: var(--text-color);
+    font-family: Verdana, Arial, Tahoma, Serif;
+    background-color: var(--general-background-color);
+}
+
+#header {
+    width: 100%;
+    background-color: var(--header-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* h1 is used in the header */
+h1 {
+    padding: 10px;
+    margin: 0px;
+    padding-left: 20px;
+}
