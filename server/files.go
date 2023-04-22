@@ -135,7 +135,7 @@ func (s Server) getFilesHandler() http.HandlerFunc {
 			return
 		}
 
-		// Get files database
+		// Get files from database
 		files, err := s.storer.GetAllUserFiles(sessionId)
 		if err != nil {
 			fmt.Println(err.Error())

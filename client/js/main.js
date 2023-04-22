@@ -6,9 +6,12 @@ class Index {
         this.router = new Router()
         this.router.addRoute("/", this.homeHandler.bind(this))
         this.router.addRoute("/file/|fileId", this.fileHandler.bind(this))
+
+        this.files = []
     }
 
-    homeHandler() {
+    async homeHandler() {
+        await this.getData()
         this.addContainers()
         this.addSidePanel()
     }
@@ -17,7 +20,15 @@ class Index {
         this.addContainers()
     }
 
-    // Adds structure of html document
+    async getData() {
+        try {
+            this.files = await this.api.getAllFiles()
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    // addContainers adds structure of html document
     addContainers() {
         document.body.innerHTML = `
         <div id="app">
@@ -39,12 +50,14 @@ class Index {
             return
         }
 
+        // Add label for file input
         const uploadNewFileLabelElm = document.createElement("label")
         uploadNewFileLabelElm.classList = ["fileUpload"]
         uploadNewFileLabelElm.innerText = "Upload file"
         uploadNewFileLabelElm.htmlFor = "fileUpload"
-        sidePanelElm.appendChild(uploadNewFileLabelElm)
+        sidePanelElm.append(uploadNewFileLabelElm)
 
+        // Add input for uploading files
         const uploadNewFileInputElm = document.createElement("input")
         uploadNewFileInputElm.type = "file"
         uploadNewFileInputElm.id = "fileUpload"
@@ -54,9 +67,21 @@ class Index {
             if (!file) {
                 return
             }
-            this.api.UploadFile(file)
+            this.api.uploadFile(file)
         })
-        sidePanelElm.appendChild(uploadNewFileInputElm)
+        sidePanelElm.append(uploadNewFileInputElm)
+
+        // Add list of uploaded files
+        const filesContainerElm = document.createElement("div")
+
+        for (let file of this.files) {
+            const fileLinkElm = document.createElement("a")
+            fileLinkElm.href = "/file/" + file.id
+            fileLinkElm.innerText = file.filename
+            filesContainerElm.append(fileLinkElm)
+        }
+
+        sidePanelElm.append(filesContainerElm)
     }
 }
 

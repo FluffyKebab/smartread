@@ -43,7 +43,7 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 	files := make([]File, 0)
 	for rows.Next() {
 		var f File
-		err := rows.Scan(&f.FileName, &f.Id, &f.OwnerId)
+		err := rows.Scan(&f.Id, &f.FileName, &f.OwnerId)
 		if err != nil {
 			return []File{}, err
 		}

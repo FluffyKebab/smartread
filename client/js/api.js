@@ -2,18 +2,24 @@
 class Api {
     // Private class variables:
     #newFileEndpoint = "/api/new_file"
+    #getFilesEndpoint = "/api/get_files"
 
-    UploadFile(file) {
+    uploadFile(file) {
         const formData = new FormData()
         formData.append("file", file)
 
-        fetch(this.#newFileEndpoint, {
-            method: "POST",
-            body: formData,
-        }).then(response => {
-            console.log(response)
-        }).catch(err => {
-            console.error(err)
-        })
+        fetch(this.#newFileEndpoint, {method: "POST", body: formData,})
+            .then(response => {console.log(response)})
+            .catch(err => {console.error(err)})
+    }
+
+    async getAllFiles() {
+        const response = await fetch(this.#getFilesEndpoint, {method: "GET"})
+        if (response.status != 200) {
+            throw new Error(`Error loading file data. Status: ${response.status}`)
+        }
+        
+        const jsonResponse = await response.json()
+        return jsonResponse.files
     }
 }
