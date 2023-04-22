@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tmc/langchaingo/exp/chains"
-	"github.com/tmc/langchaingo/exp/documentLoaders"
 	"github.com/tmc/langchaingo/exp/embeddings"
+	"github.com/tmc/langchaingo/exp/schema"
 	"github.com/tmc/langchaingo/exp/textSplitters"
 	"github.com/tmc/langchaingo/exp/vectorStores/pinecone"
 	"github.com/tmc/langchaingo/llms/openai"
@@ -39,7 +39,7 @@ func NewHandler() (Handler, error) {
 func (h Handler) AddFile(fileData string) (fileId string, err error) {
 
 	splitter := textSplitters.NewRecursiveCharactersSplitter()
-	docs, err := documentLoaders.NewTextLoaderFromFile(fileData).LoadAndSplit(splitter)
+	docs, err := textSplitters.SplitDocuments(splitter, []schema.Document{{PageContent: fileData}})
 	if err != nil {
 		return "", err
 	}

@@ -1,20 +1,70 @@
 html, body {
     margin: 0;
     height: 100%;
-    color: var(--text-color);
     font-family: Verdana, Arial, Tahoma, Serif;
+    color: var(--text-color);
     background-color: var(--general-background-color);
 }
 
+#app {
+    height: 100%;
+}
+
+#mainAppContainer {
+    height: 100%;
+}
+
 #header {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     background-color: var(--header-color);
     border-bottom: 1px solid var(--border-color);
+    justify-content: center;
 }
 
-/* h1 is used in the header */
-h1 {
+#header > h1 {
     padding: 10px;
     margin: 0px;
     padding-left: 20px;
 }
+
+#sidePanel {
+    padding-top: 70px;
+    width: 300px;
+    height: calc(100% - 70px);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    background-color: var(--side-panel-color);
+    border-right: 1px solid var(--border-color);
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.fileUpload {
+    border: 1px solid var(--button-border-color);
+    border-radius: 5px;
+    display: inline-block;
+    padding: 8px 12px;
+    cursor: pointer;
+    width: 80%;
+    height: fit-content;
+}
+
+/* #sidePanel > button {
+    width: calc(100% - 20px);
+    padding: 10px;
+    background-color: var(--side-panel-color);
+    margin: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--button-border-color);
+    color: var(--text-color);
+}
+
+#sidePanel > button :hover {
+    cursor: pointer;
+} */
