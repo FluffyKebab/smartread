@@ -1,4 +1,4 @@
-// class responsible for modifying the html document depending on the current route and data from the api
+// class responsible for modifying the html document depending on the current route and data from the api.
 class Index {
     constructor() {
         this.api = new Api()
@@ -11,16 +11,36 @@ class Index {
     }
 
     async homeHandler() {
-        await this.getData()
+        await this.getFiles()
         this.addContainers()
         this.addSidePanel()
+        this.addHomeChatWindow()
     }
 
-    fileHandler(fileId) {
+    async fileHandler(fileId) {
+        await this.getFiles()
+
+        let fileName = ""
+        for (let file of this.files) {
+            if (file.id == fileId) {
+                fileName = file.filename
+                break
+            }
+        }
+
+        if (fileName == "") {
+            this.router.notFoundTemplate()
+            return
+        }
+
+        const previousMessages = this.api.getPreviousMessages(fileId, fileName)
+
         this.addContainers()
+        this.addSidePanel()
+        this.addFileChatWindow(fileName, previousMessages)
     }
 
-    async getData() {
+    async getFiles() {
         try {
             this.files = await this.api.getAllFiles()
         } catch (err) {
@@ -28,7 +48,7 @@ class Index {
         }
     }
 
-    // addContainers adds structure of html document
+    // addContainers adds the structure of html document.
     addContainers() {
         document.body.innerHTML = `
         <div id="app">
@@ -38,7 +58,7 @@ class Index {
 
             <div id="mainAppContainer">
                 <div id="sidePanel"></div>
-                <div id="chat"></div>
+                <div id="chatWindow"></div>
             </div>
         </div>`
     }
@@ -50,14 +70,14 @@ class Index {
             return
         }
 
-        // Add label for file input
+        // Add label for file input.
         const uploadNewFileLabelElm = document.createElement("label")
         uploadNewFileLabelElm.classList = ["fileUpload"]
         uploadNewFileLabelElm.innerText = "Upload file"
         uploadNewFileLabelElm.htmlFor = "fileUpload"
         sidePanelElm.append(uploadNewFileLabelElm)
 
-        // Add input for uploading files
+        // Add input for uploading files.
         const uploadNewFileInputElm = document.createElement("input")
         uploadNewFileInputElm.type = "file"
         uploadNewFileInputElm.id = "fileUpload"
@@ -68,11 +88,31 @@ class Index {
                 return
             }
             this.api.uploadFile(file)
+                .then(newFile => {
+                    console.log("new file: ", newFile)
+                    if (newFile) {
+                        this.files.push(newFile)
+                        this.updateFileList()
+                    }
+                })
+
         })
         sidePanelElm.append(uploadNewFileInputElm)
 
-        // Add list of uploaded files
+        // Add list of uploaded files.
         const filesContainerElm = document.createElement("div")
+        filesContainerElm.id = "fileList"
+        sidePanelElm.append(filesContainerElm)
+        this.updateFileList()
+    }
+
+    updateFileList() {
+        const filesContainerElm = document.getElementById("fileList")
+        if (!filesContainerElm) {
+            console.error("fileList container must be added before running updateFileList")
+            return
+        }
+        filesContainerElm.innerHTML = ""
 
         for (let file of this.files) {
             const fileLinkElm = document.createElement("a")
@@ -80,8 +120,52 @@ class Index {
             fileLinkElm.innerText = file.filename
             filesContainerElm.append(fileLinkElm)
         }
+    }
 
-        sidePanelElm.append(filesContainerElm)
+    addHomeChatWindow() {
+        const chatWindowElm = document.getElementById("chatWindow")
+        if (!chatWindowElm) {
+            console.error("Chat window must be added before running addHomeChatWidow")
+            return
+        }
+
+        const pElm = document.createElement("p")
+        pElm.innerText = "Velg eller last opp en fil for å spørre spørsmål"
+        chatWindowElm.append(pElm)
+    }
+
+    addFileChatWindow(filename, previousMessages) {
+        const chatWindowElm = document.getElementById("chatWindow")
+        if (!chatWindowElm) {
+            console.error("Chat window must be added before running addHomeChatWidow")
+            return
+        }
+
+        // Adding container for messages.
+        const chatMessageContainer = document.createElement("div")
+        chatMessageContainer.id = "chatMessageContainer"
+        chatWindowElm.append(chatMessageContainer)
+
+        // Adding previous messages.
+        for (let message of previousMessages) {
+            const messageElm = document.createElement("div")
+            messageElm.classList = [message.role = "AI" ? "aiMessage" : "humanMessage", "message"]
+            messageElm.innerText = message.value
+            chatMessageContainer. append(messageElm)
+        }
+
+        // Adding input.
+        const sendChatMessageContainer = document.createElement("div")
+        sendChatMessageContainer.id = "chatInputContainer"
+        const sendMessageInput = document.createElement("input")
+        sendMessageInput.type = "text"
+        sendChatMessageContainer.append(sendMessageInput)
+        const sendMessageSubmit = document.createElement("input")
+        sendMessageSubmit.type = "submit"
+        
+        sendChatMessageContainer.append(sendMessageSubmit)
+
+        chatWindowElm.append(sendChatMessageContainer)
     }
 }
 

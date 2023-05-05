@@ -12,6 +12,8 @@ html, body {
 
 #mainAppContainer {
     height: 100%;
+    display: flex;
+    flex-direction: row;
 }
 
 #header {
@@ -31,15 +33,23 @@ html, body {
 }
 
 #sidePanel {
-    padding-top: 70px;
+    padding-top: 60px;
     width: 300px;
-    height: calc(100% - 70px);
+    height: calc(100% - 60px);
     display: flex;
     flex-direction: column;
     justify-content: top;
-    align-items: center;
+    align-items: left;
     background-color: var(--side-panel-color);
     border-right: 1px solid var(--border-color);
+}
+
+#sidePanel a {
+    text-decoration: none;
+    display: block;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 10px;
 }
 
 input[type="file"] {
@@ -47,25 +57,36 @@ input[type="file"] {
 }
 
 .fileUpload {
-    border: 1px solid var(--button-border-color);
-    border-radius: 5px;
-    display: inline-block;
-    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: block;
     cursor: pointer;
-    width: 80%;
     height: fit-content;
+    padding: 15px 10px;
 }
 
-/* #sidePanel > button {
-    width: calc(100% - 20px);
-    padding: 10px;
-    background-color: var(--side-panel-color);
-    margin: 10px;
-    border-radius: 5px;
-    border: 1px solid var(--button-border-color);
-    color: var(--text-color);
+#chatWindow {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
 }
 
-#sidePanel > button :hover {
-    cursor: pointer;
-} */
+#chatMessageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+}
+
+#chatInputContainer {
+    padding: 30px 80px;
+    border-top: 1px solid var(--border-color);
+}
+
+#chatInputContainer > input[type="text"] {
+    width: 100%;
+    padding: 10px
+}

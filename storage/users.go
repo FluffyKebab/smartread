@@ -18,9 +18,9 @@ type User struct {
 	Username  string `json:"username"`
 }
 
-// Returns sessionId and error
+// AddUser creates a new row with Returns sessionId and error.
 func (s storer) AddUser(username string, passwordHash string, email string, sessionId string) (string, error) {
-	//Check if email is already used
+	//Check if email is used.
 	emailIsUsed, err := s.emailIsUsed(email)
 	if err != nil {
 		return "", err
@@ -30,14 +30,14 @@ func (s storer) AddUser(username string, passwordHash string, email string, sess
 		return "", ErrEmailUsed
 	}
 
-	//Check if sessionId exists and update old row with new values if user is guest user
+	//Check if sessionId exists and update old row with new values if user is guest user.
 	if sessionId != "" {
 		id, err := s.getIdFromSessionId(sessionId)
 		if err != nil {
 			return "", err
 		}
 
-		//If session id has row
+		//If session id is in the database.
 		if id != -1 {
 			userIsGuest, err := s.userIsGuest(id)
 			if err != nil {
@@ -61,7 +61,7 @@ func (s storer) AddUser(username string, passwordHash string, email string, sess
 		}
 	}
 
-	//Create session id and insert new user row
+	//Create session id and insert new user row.
 	sessionId = uuid.New().String()
 
 	_, err = s.db.Exec(`
@@ -71,7 +71,7 @@ func (s storer) AddUser(username string, passwordHash string, email string, sess
 	return sessionId, err
 }
 
-// Returns sessionId and error
+// AddGuestUser returns sessionId from new guest user.
 func (s storer) AddGuestUser() (string, error) {
 	sessionId := uuid.New().String()
 
@@ -82,6 +82,8 @@ func (s storer) AddGuestUser() (string, error) {
 	return sessionId, err
 }
 
+// PasswordAndEmailIsCorrect returns the session id of the user with password and email given.
+// If the user does not exists and empty string is returned.
 func (s storer) PasswordAndEmailIsCorrect(password, email string) (string, error) {
 	row := s.db.QueryRow("SELECT sessionId FROM users WHERE password = ? AND email = ?", password, email)
 	var sessionId string
@@ -129,6 +131,10 @@ func (s storer) userIsGuest(userId int) (bool, error) {
 	var isGuest bool
 	err := row.Scan(&isGuest)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
 		return false, err
 	}
 

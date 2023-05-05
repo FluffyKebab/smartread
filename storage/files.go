@@ -2,7 +2,12 @@ package storage
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
+)
+
+var (
+	ErrFileNotExist       = errors.New("file with given id does not exist")
+	ErrFileNotOwnedByUser = errors.New("file is not owned by user")
 )
 
 type File struct {
@@ -26,18 +31,18 @@ func (s storer) AddFile(userSessionId string, fileData string, fileName string) 
 		INSERT INTO files (id, fileName, ownerId ) VALUES (?, ?, ?)
 	`, fileId, fileName, ownerId)
 
-	return fileId, nil
+	return fileId, err
 }
 
 func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 	ownerId, err := s.getIdFromSessionId(userSessionId)
 	if err != nil {
-		return []File{}, err
+		return nil, err
 	}
 
 	rows, err := s.db.Query("SELECT * FROM files WHERE ownerId = ?", ownerId)
 	if err != nil {
-		return []File{}, err
+		return nil, err
 	}
 
 	files := make([]File, 0)
@@ -45,7 +50,7 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 		var f File
 		err := rows.Scan(&f.Id, &f.FileName, &f.OwnerId)
 		if err != nil {
-			return []File{}, err
+			return nil, err
 		}
 
 		files = append(files, f)
@@ -54,11 +59,8 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 	return files, nil
 }
 
-var ErrFileNotExist = fmt.Errorf("File with given id does not exist")
-var ErrFileNotOwnedByUser = fmt.Errorf("File is not owned by user")
-
 func (s storer) QueryFile(userSessionId, fileId, query string) (string, error) {
-	//Check if file exists and if user owns file
+	//Check if file exists and if user owns file.
 	ownerId, err := s.getIdFromSessionId(userSessionId)
 	if err != nil {
 		return "", err
@@ -71,7 +73,7 @@ func (s storer) QueryFile(userSessionId, fileId, query string) (string, error) {
 			return "", err
 		}
 
-		// Check if file exist and is owned by other user or if file doesn't exist
+		// Check if file exist and is owned by other user or if file doesn't exist.
 		row = s.db.QueryRow(`SELECT * FROM files WHERE AND id = ?`, fileId)
 		err := row.Scan()
 		if err != nil {
@@ -79,10 +81,10 @@ func (s storer) QueryFile(userSessionId, fileId, query string) (string, error) {
 				return "", err
 			}
 
-			return "", ErrFileNotExist // No file with fileId given exists
+			return "", ErrFileNotExist
 		}
 
-		return "", ErrFileNotOwnedByUser // File exists but with other ownerId
+		return "", ErrFileNotOwnedByUser
 	}
 
 	return s.textHandler.QueryFile(fileId, query)

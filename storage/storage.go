@@ -23,20 +23,22 @@ type storer struct {
 	textHandler text.Handler
 }
 
-func NewStorer() (Storer, error) {
+var _ storer = storer{}
+
+func New() (Storer, error) {
 	db, err := sql.Open("sqlite", "./database.db")
 	if err != nil {
-		return storer{}, fmt.Errorf("Unable to open database: %s", err.Error())
+		return nil, fmt.Errorf("open database: %w", err)
 	}
 
 	err = configDatabase(db)
 	if err != nil {
-		return storer{}, err
+		return nil, err
 	}
 
 	textHandler, err := text.NewHandler()
 	if err != nil {
-		return storer{}, err
+		return nil, err
 	}
 
 	return storer{
@@ -67,9 +69,6 @@ func configDatabase(db *sql.DB) error {
 			ownerId INTEGER
 		);`,
 	)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }

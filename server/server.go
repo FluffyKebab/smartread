@@ -9,6 +9,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var verbose = true
+
 type Server struct {
 	storer storage.Storer
 	router *mux.Router
@@ -16,7 +18,7 @@ type Server struct {
 
 func New() (Server, error) {
 	r := mux.NewRouter()
-	s, err := storage.NewStorer()
+	s, err := storage.New()
 	if err != nil {
 		return Server{}, err
 	}
@@ -57,8 +59,7 @@ func (s Server) indexHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := s.getSessionId(w, r)
 		if err != nil {
-			fmt.Println(err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError, "failed to create guest user")
 			return
 		}
 
@@ -70,12 +71,21 @@ func staticHandler(filepath string, contentType string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := ioutil.ReadFile(filepath)
 		if err != nil {
-			fmt.Println("Unable to read file data", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError, "")
 			return
 		}
 
 		w.Header().Set("Content-Type", contentType)
 		w.Write(data)
 	}
+}
+
+func handleError(w http.ResponseWriter, err error, status int, userMessage string) {
+	if verbose && err != nil {
+		fmt.Printf("%s: %s", userMessage, err.Error())
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(status)
+	w.Write([]byte(userMessage))
 }

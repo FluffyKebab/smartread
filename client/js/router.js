@@ -1,4 +1,4 @@
-// simple router 
+// Router is a simple router. 
 class Router {
     constructor() {
         this.routes = {}
@@ -12,7 +12,7 @@ class Router {
 
     /* 
     If | is used in route characters after will be put as input to the function
-    E.g /files/| /files/234 234 is input
+    E.g /files/| /files/234 234 is input.
     */
 
     addRoute(path, template) {
@@ -22,7 +22,7 @@ class Router {
         }
 
         if (typeof path !== "string") {
-            console.error("Path not function")
+            console.error("Path not string")
             return
         }
 
@@ -46,7 +46,7 @@ class Router {
         for (let [path, template] of Object.entries(this.routes)) {
             if (path.endsWith("|")) {
                 if (url.startsWith(path.split("|")[0])) {
-                    //If current path is a open path and the url starts with the path
+                    //If current path is a open path and the url starts with the path.
                     let posOfPipe = path.indexOf("|")
                     let inputToFunction = url.slice(posOfPipe, url.length)
 
@@ -59,7 +59,3 @@ class Router {
         this.notFoundTemplate()
     }
 }
-
-
-
-
