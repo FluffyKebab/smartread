@@ -66,24 +66,24 @@ func (s storer) QueryFile(userSessionId, fileId, query string) (string, error) {
 		return "", err
 	}
 
-	row := s.db.QueryRow(`SELECT * FROM files WHERE ownerId = ? AND id = ?`, ownerId, fileId)
-	err = row.Scan()
+	rows, err := s.db.Query(`SELECT * FROM files WHERE ownerId = ? AND id = ?`, ownerId, fileId)
 	if err != nil {
+		return "", err
+	}
+
+	if !rows.Next() {
 		if err != sql.ErrNoRows {
 			return "", err
 		}
 
 		// Check if file exist and is owned by other user or if file doesn't exist.
-		row = s.db.QueryRow(`SELECT * FROM files WHERE AND id = ?`, fileId)
-		err := row.Scan()
+		rows, err = s.db.Query(`SELECT * FROM files WHERE AND id = ?`, fileId)
 		if err != nil {
-			if err != sql.ErrNoRows {
-				return "", err
-			}
-
+			return "", err
+		}
+		if !rows.Next() {
 			return "", ErrFileNotExist
 		}
-
 		return "", ErrFileNotOwnedByUser
 	}
 

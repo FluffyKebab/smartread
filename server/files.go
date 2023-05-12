@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"smartread/storage"
+
+	"github.com/gorilla/mux"
 )
 
 type addFileResponse struct {
@@ -76,12 +78,20 @@ func (s Server) queryFileHandler() http.HandlerFunc {
 			return
 		}
 
-		// Get query string and file id from form values.
-		r.ParseForm()
-		query := r.Form.Get("query")
-		fileId := r.Form.Get("fileId")
-		if query == "" || fileId == "" {
-			handleError(w, err, http.StatusUnprocessableEntity, "missing from filed")
+		// Get query string and file id from form values and params.
+		fileId, ok := mux.Vars(r)["fileId"]
+		if !ok {
+			handleError(w, nil, http.StatusUnprocessableEntity, "missing id")
+			return
+		}
+
+		err = r.ParseForm()
+		if err != nil {
+			handleError(w, err, http.StatusUnprocessableEntity, "malformed form data")
+		}
+		query := r.PostFormValue("query")
+		if query == "" {
+			handleError(w, nil, http.StatusUnprocessableEntity, "missing query")
 			return
 		}
 

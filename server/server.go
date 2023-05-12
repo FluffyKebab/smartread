@@ -33,20 +33,21 @@ func New() (Server, error) {
 }
 
 func (s Server) config() {
-	// User handlers
+	// User handlers:
 	s.router.HandleFunc("/api/new_user", s.newUserHandler()).Methods("POST")
 	s.router.HandleFunc("/api/login", s.loginHandler()).Methods("POST")
 
-	// File and query handlers
+	// File and query handlers:
 	s.router.HandleFunc("/api/new_file", s.addFileHandler()).Methods("POST")
-	s.router.HandleFunc("/api/query_file/{fileId}", s.queryFileHandler()).Methods("GET")
+	s.router.HandleFunc("/api/query_file/{fileId}", s.queryFileHandler()).Methods("POST")
 	s.router.HandleFunc("/api/get_files", s.getFilesHandler()).Methods("GET")
 
-	// Static handlers
+	// Static handlers:
 	s.router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir("./client/css"))))
 	s.router.PathPrefix("/js/").Handler(http.StripPrefix("/js/", http.FileServer(http.Dir("./client/js"))))
+	s.router.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./client/img"))))
 
-	// All other routing is done in the client
+	// All other routing is done in the client.
 	s.router.NotFoundHandler = s.indexHandler()
 }
 
@@ -83,6 +84,8 @@ func staticHandler(filepath string, contentType string) http.HandlerFunc {
 func handleError(w http.ResponseWriter, err error, status int, userMessage string) {
 	if verbose && err != nil {
 		fmt.Printf("%s: %s", userMessage, err.Error())
+	} else if verbose {
+		fmt.Println(userMessage)
 	}
 
 	w.Header().Set("Content-Type", "text/plain")

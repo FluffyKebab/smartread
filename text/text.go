@@ -4,12 +4,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tmc/langchaingo/exp/chains"
 	"github.com/tmc/langchaingo/exp/embeddings"
 	"github.com/tmc/langchaingo/exp/schema"
 	"github.com/tmc/langchaingo/exp/textSplitters"
 	"github.com/tmc/langchaingo/exp/vectorStores/pinecone"
-	"github.com/tmc/langchaingo/llms/openai"
 )
 
 var pineconeEnv = "us-central1-gcp"
@@ -44,6 +42,8 @@ func (h Handler) AddFile(fileData string) (fileId string, err error) {
 		return "", err
 	}
 
+	fmt.Println("docs: ", docs)
+
 	fileId = uuid.New().String()
 	h.pineconeIndex.AddDocuments(docs, []string{}, fileId)
 
@@ -51,26 +51,5 @@ func (h Handler) AddFile(fileData string) (fileId string, err error) {
 }
 
 func (h Handler) QueryFile(fileId string, query string) (string, error) {
-	llm, err := openai.New()
-	if err != nil {
-		return "", err
-	}
-
-	chain := chains.NewRetrievalQAChainFromLLM(llm, h.pineconeIndex.ToRetriever(5, fileId))
-
-	resultMap, err := chains.Call(chain, map[string]any{
-		"query": query,
-	})
-
-	resultAny, ok := resultMap["text"]
-	if !ok {
-		return "", fmt.Errorf("Missing text field in QAchain result")
-	}
-
-	result, ok := resultAny.(string)
-	if !ok {
-		return "", fmt.Errorf("Text field of wrong type")
-	}
-
-	return result, err
+	return "wow dette er en vrldig god response", nil
 }

@@ -4,8 +4,10 @@ class Api {
     // Private class variables:
     #newFileEndpoint = "/api/new_file"
     #getFilesEndpoint = "/api/get_files"
-    #AIRole = "AI"
-    #UserRole = "User"
+    #queryEndpoint = "/api/query_file/"
+
+    AIRole = "AI"
+    userRole = "User"
  
     async uploadFile(file) {
         const formData = new FormData()
@@ -32,11 +34,38 @@ class Api {
         return jsonResponse.files
     }
 
+    async doQuery(fileId, query) {
+        const formData = new URLSearchParams()
+        formData.append("query", query)
+
+        const response = await fetch(this.#queryEndpoint + fileId, {method: "POST", body: formData})
+        if (response.status != 200) {
+            throw new Error(`Getting query failed: ${response.status}`)
+        }
+        const textResponse = await response.json()
+
+        // Save user and AI message to local storage.
+        const userMessage = {
+            role: this.userRole,
+            value: query,
+        }
+
+        const aiMessage = {
+            role: this.AIRole,
+            value: textResponse.response,
+        }
+
+        this.saveMessage(fileId, userMessage)
+        this.saveMessage(fileId, aiMessage)
+
+        return aiMessage
+    }
+
     getPreviousMessages(fileId, fileName) {
         let previousMessages = localStorage.getItem(fileId)
         if (previousMessages === null) {
             previousMessages = [{
-                role: this.#AIRole,
+                role: this.AIRole,
                 value: "Start asking me questions about the file " + fileName
             }]
 
@@ -48,15 +77,11 @@ class Api {
         return JSON.parse(previousMessages)
     }
 
-    saveMessage(fileId, isAIMessage, value) {
+    saveMessage(fileId, message) {
         let previousMessages = localStorage.getItem(fileId)
         previousMessages = previousMessages === null ? [] : JSON.parse(previousMessages)
        
-        previousMessages.push({
-            role: isAIMessage ? this.#AIRole : this.#UserRole,
-            value: value,
-        })
-
+        previousMessages.push(message)
         localStorage.setItem(fileId, JSON.stringify(previousMessages))
     }
 

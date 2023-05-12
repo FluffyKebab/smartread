@@ -1,4 +1,5 @@
-// class responsible for modifying the html document depending on the current route and data from the api.
+// Index is the class responsible for modifying the html document depending 
+// on the current route and data from the api.
 class Index {
     constructor() {
         this.api = new Api()
@@ -37,7 +38,7 @@ class Index {
 
         this.addContainers()
         this.addSidePanel()
-        this.addFileChatWindow(fileName, previousMessages)
+        this.addFileChatWindow(fileId, previousMessages)
     }
 
     async getFiles() {
@@ -73,7 +74,7 @@ class Index {
         // Add label for file input.
         const uploadNewFileLabelElm = document.createElement("label")
         uploadNewFileLabelElm.classList = ["fileUpload"]
-        uploadNewFileLabelElm.innerText = "Upload file"
+        uploadNewFileLabelElm.innerText = "Last opp en fil"
         uploadNewFileLabelElm.htmlFor = "fileUpload"
         sidePanelElm.append(uploadNewFileLabelElm)
 
@@ -89,7 +90,6 @@ class Index {
             }
             this.api.uploadFile(file)
                 .then(newFile => {
-                    console.log("new file: ", newFile)
                     if (newFile) {
                         this.files.push(newFile)
                         this.updateFileList()
@@ -99,7 +99,7 @@ class Index {
         })
         sidePanelElm.append(uploadNewFileInputElm)
 
-        // Add list of uploaded files.
+        // Legg til listen av tidligere lastet opp filer.
         const filesContainerElm = document.createElement("div")
         filesContainerElm.id = "fileList"
         sidePanelElm.append(filesContainerElm)
@@ -134,38 +134,88 @@ class Index {
         chatWindowElm.append(pElm)
     }
 
-    addFileChatWindow(filename, previousMessages) {
+    addFileChatWindow(fileId, previousMessages) {
         const chatWindowElm = document.getElementById("chatWindow")
         if (!chatWindowElm) {
             console.error("Chat window must be added before running addHomeChatWidow")
             return
         }
 
-        // Adding container for messages.
+        // Lag en container for meldingene.
         const chatMessageContainer = document.createElement("div")
         chatMessageContainer.id = "chatMessageContainer"
         chatWindowElm.append(chatMessageContainer)
 
-        // Adding previous messages.
+        // Legg til tidligere melidinger.
         for (let message of previousMessages) {
-            const messageElm = document.createElement("div")
-            messageElm.classList = [message.role = "AI" ? "aiMessage" : "humanMessage", "message"]
-            messageElm.innerText = message.value
-            chatMessageContainer. append(messageElm)
+            this.addMessageToDOM(message)
         }
 
-        // Adding input.
-        const sendChatMessageContainer = document.createElement("div")
-        sendChatMessageContainer.id = "chatInputContainer"
+        // Legg inn skrive feltet.
+        const chatInputBox = document.createElement("div")
+        chatInputBox.id = "chatInputBox"
+
+        const chatInputContainer = document.createElement("div")
+        chatInputContainer.id = "chatInputContainer"
+
         const sendMessageInput = document.createElement("input")
         sendMessageInput.type = "text"
-        sendChatMessageContainer.append(sendMessageInput)
-        const sendMessageSubmit = document.createElement("input")
-        sendMessageSubmit.type = "submit"
-        
-        sendChatMessageContainer.append(sendMessageSubmit)
+        sendMessageInput.placeholder = "Skriv melding"
+        chatInputContainer.append(sendMessageInput)
 
-        chatWindowElm.append(sendChatMessageContainer)
+        const sendMessageSubmit = document.createElement("button")
+        sendMessageSubmit.type = "submit"
+        sendMessageInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendMessageSubmit.click();
+            }
+        });
+        sendMessageSubmit.onclick = e => {
+            const messageValue = sendMessageInput.value
+            if (messageValue == "") {
+                return
+            }
+
+            sendMessageInput.value = ""
+            this.addMessageToDOM({
+                role: this.api.userRole,
+                value: messageValue,
+            })
+
+            this.api.doQuery(fileId, messageValue).then(message => this.addMessageToDOM(message))
+        }
+
+        const submitIcon = document.createElement("img")
+        submitIcon.src = "/img/send_message.png"
+        submitIcon.height = "30"
+        sendMessageSubmit.append(submitIcon)
+
+        chatInputContainer.append(sendMessageSubmit)
+        chatInputBox.append(chatInputContainer)
+        chatWindowElm.append(chatInputBox)
+
+        // Scroll ned til de nyeste meldingene.
+        chatMessageContainer.scrollTop = chatMessageContainer.scrollHeight
+    }
+
+    addMessageToDOM(message) {
+        const chatMessageContainer = document.getElementById("chatMessageContainer")
+        if (!chatMessageContainer) {
+            console.error("chat Message Container must be added before running add message")
+            return
+        }
+
+        const messageElm = document.createElement("div")
+        messageElm.classList.add(
+            message.role == this.api.AIRole ? "aiMessage" : "userMessage", 
+            "message",
+        )
+        messageElm.innerText = message.value
+        chatMessageContainer.append(messageElm)
+
+        // Scroll ned til de nyeste meldingene.
+        chatMessageContainer.scrollTop = chatMessageContainer.scrollHeight
     }
 }
 

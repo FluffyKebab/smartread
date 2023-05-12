@@ -12,25 +12,21 @@ type newUserResponse struct {
 
 func (s Server) newUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get form vales
+		// Authenticate user.
+		sessionId, err := s.getSessionId(w, r)
+		if err != nil {
+			handleError(w, err, http.StatusInternalServerError, "")
+			return
+		}
+
+		// Get username, password and email from form vales.
 		r.ParseForm()
 		username := r.Form.Get("username")
 		password := r.Form.Get("password")
 		email := r.Form.Get("email")
 
 		if username == "" || password == "" || email == "" {
-			fmt.Println("Missing form field")
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			w.Write([]byte("Missing form field"))
-			return
-		}
-
-		// Authenticate user
-		sessionId, err := s.getSessionId(w, r)
-		if err != nil {
-			fmt.Println(err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			handleError(w, nil, http.StatusUnprocessableEntity, "missing from field")
 			return
 		}
 

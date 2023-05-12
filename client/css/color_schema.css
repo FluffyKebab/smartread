@@ -1,7 +1,13 @@
 :root {
-    --header-color: rgb(69, 70, 85);
-    --side-panel-color: rgb(47, 49, 65);
+    color-scheme: dark;
+    --header-color: rgb(34, 35, 39);
+    --side-panel-color: rgb(22, 22, 25);
     --general-background-color: rgb(54, 56, 66);
+
+    --chat-input-container-color: rgb(41, 41, 46);
+    --text-input-color: #3a3a3f;
+    --text-input-border-color: #202021;
+    --message-color: var(--header-color);
 
     --border-color: rgb(41, 41, 46);
     --button-border-color: black;
