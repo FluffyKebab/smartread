@@ -2,7 +2,6 @@ package text
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/tmc/langchaingo/chains"
@@ -82,8 +81,6 @@ func (h Handler) QueryFile(fileId string, query string) (string, error) {
 		return "", err
 	}
 
-	fileId = uuid.New().String()
-
 	store, err := pinecone.New(
 		context.TODO(),
 		pinecone.WithEmbedder(e),
@@ -101,16 +98,9 @@ func (h Handler) QueryFile(fileId string, query string) (string, error) {
 		return "", err
 	}
 
-	docs, err := store.SimilaritySearch(context.Background(), query, 4)
-	if err != nil {
-		return "", fmt.Errorf("klarte ikke å søke i docs %w", err)
-	}
-
-	fmt.Println(docs)
-
 	return chains.Run(
 		context.TODO(),
-		chains.NewRetrievalQAFromLLM(llm, vectorstores.ToRetriever(store, 5)),
+		chains.NewRetrievalQAFromLLM(llm, vectorstores.ToRetriever(store, 2)),
 		query,
 	)
 }
