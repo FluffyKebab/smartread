@@ -18,7 +18,7 @@ type Server struct {
 
 func New() (Server, error) {
 	r := mux.NewRouter()
-	s, err := storage.New()
+	s, err := storage.New("database", "123456789")
 	if err != nil {
 		return Server{}, err
 	}
@@ -34,13 +34,13 @@ func New() (Server, error) {
 
 func (s Server) config() {
 	// User handlers:
-	s.router.HandleFunc("/api/new_user", s.newUserHandler()).Methods("POST")
-	s.router.HandleFunc("/api/login", s.loginHandler()).Methods("POST")
+	s.router.HandleFunc("/api/new_user", s.newUserHandler).Methods("POST")
+	s.router.HandleFunc("/api/login", s.loginHandler).Methods("POST")
 
 	// File and query handlers:
-	s.router.HandleFunc("/api/new_file", s.addFileHandler()).Methods("POST")
-	s.router.HandleFunc("/api/query_file/{fileId}", s.queryFileHandler()).Methods("POST")
-	s.router.HandleFunc("/api/get_files", s.getFilesHandler()).Methods("GET")
+	s.router.HandleFunc("/api/new_file", s.addFileHandler).Methods("POST")
+	s.router.HandleFunc("/api/query_file/{fileId}", s.queryFileHandler).Methods("POST")
+	s.router.HandleFunc("/api/get_files", s.getFilesHandler).Methods("GET")
 
 	// Static handlers:
 	s.router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir("./client/css"))))
@@ -83,7 +83,7 @@ func staticHandler(filepath string, contentType string) http.HandlerFunc {
 
 func handleError(w http.ResponseWriter, err error, status int, userMessage string) {
 	if verbose && err != nil {
-		fmt.Printf("%s: %s", userMessage, err.Error())
+		fmt.Printf("%s: %s \n", userMessage, err.Error())
 	} else if verbose {
 		fmt.Println(userMessage)
 	}

@@ -7,7 +7,10 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrEmailUsed = fmt.Errorf("email is already used")
+var (
+	ErrEmailUsed        = fmt.Errorf("email is already used")
+	ErrInvalidSessionId = fmt.Errorf("session id is invalid")
+)
 
 type User struct {
 	Id        int    `json:"id"`
@@ -50,11 +53,11 @@ func (s storer) AddUser(username string, passwordHash string, email string, sess
 
 			_, err = s.db.Exec(`
 				UPDATE users 
-					SET password = ?,
-					SET email = ?
-					SET username = ?
-					SET isGuest = ?
-				WHERE id = ?
+					SET password = $1
+					SET email = $2
+					SET username = $3
+					SET isGuest = $4
+				WHERE id = $5
 			`, passwordHash, email, username, false, id)
 
 			return sessionId, err
@@ -65,7 +68,7 @@ func (s storer) AddUser(username string, passwordHash string, email string, sess
 	sessionId = uuid.New().String()
 
 	_, err = s.db.Exec(`
-		INSERT INTO users (sessionId, password, email, username isGuest) VALUES (?, ?, ?, ?)
+		INSERT INTO users (sessionId, password, email, username, isGuest) VALUES ($1, $2, $3, $4, $5)
 	`, sessionId, passwordHash, email, username, false)
 
 	return sessionId, err
@@ -76,8 +79,8 @@ func (s storer) AddGuestUser() (string, error) {
 	sessionId := uuid.New().String()
 
 	_, err := s.db.Exec(`
-		INSERT INTO users (sessionId, isGuest) VALUES (?, ?)
-	`, sessionId, true)
+		INSERT INTO users (sessionId, isGuest, password, username, email) VALUES ($1, $2, $3, $4, $5)
+	`, sessionId, true, "", "", "")
 
 	return sessionId, err
 }
@@ -85,7 +88,7 @@ func (s storer) AddGuestUser() (string, error) {
 // PasswordAndEmailIsCorrect returns the session id of the user with password and email given.
 // If the user does not exists and empty string is returned.
 func (s storer) PasswordAndEmailIsCorrect(password, email string) (string, error) {
-	row := s.db.QueryRow("SELECT sessionId FROM users WHERE password = ? AND email = ?", password, email)
+	row := s.db.QueryRow("SELECT sessionId FROM users WHERE password = $1 AND email = $2", password, email)
 	var sessionId string
 	err := row.Scan(&sessionId)
 	if err != nil {
@@ -99,11 +102,28 @@ func (s storer) PasswordAndEmailIsCorrect(password, email string) (string, error
 	return sessionId, nil
 }
 
-func (s storer) getIdFromSessionId(sessionId string) (int, error) {
-	row := s.db.QueryRow("SELECT id FROM users WHERE sessionId = ?", sessionId)
+func (s storer) CheckIfSessionIDIsValid(sessionId string) (bool, error) {
+	row := s.db.QueryRow("SELECT id FROM users WHERE sessionId = $1", sessionId)
 	var id int
 	err := row.Scan(&id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (s storer) getIdFromSessionId(sessionId string) (int, error) {
+	row := s.db.QueryRow("SELECT id FROM users WHERE sessionId = $1", sessionId)
+	var id int
+	err := row.Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, ErrInvalidSessionId
+		}
 		return -1, err
 	}
 
@@ -111,7 +131,7 @@ func (s storer) getIdFromSessionId(sessionId string) (int, error) {
 }
 
 func (s storer) emailIsUsed(email string) (bool, error) {
-	row := s.db.QueryRow("SELECT * FROM users WHERE email = ?", email)
+	row := s.db.QueryRow("SELECT * FROM users WHERE email = $1", email)
 
 	err := row.Scan()
 	if err != nil {
@@ -126,7 +146,7 @@ func (s storer) emailIsUsed(email string) (bool, error) {
 }
 
 func (s storer) userIsGuest(userId int) (bool, error) {
-	row := s.db.QueryRow("SELECT isGuest FROM users WHERE id = ?", userId)
+	row := s.db.QueryRow("SELECT isGuest FROM users WHERE id = $1", userId)
 
 	var isGuest bool
 	err := row.Scan(&isGuest)

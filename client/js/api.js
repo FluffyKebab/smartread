@@ -20,7 +20,7 @@ class Api {
             alert("upload failed. Try agin later.")
             return
         }
-
+        
         return await response.json()
     }
 
@@ -66,7 +66,7 @@ class Api {
         if (previousMessages === null) {
             previousMessages = [{
                 role: this.AIRole,
-                value: "Start asking me questions about the file " + fileName
+                value: "Hvordan kan jeg hjelpe deg med filen " + fileName
             }]
 
             localStorage.setItem(fileId, JSON.stringify(previousMessages))

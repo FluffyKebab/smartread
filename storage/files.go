@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -28,7 +29,7 @@ func (s storer) AddFile(userSessionId string, fileData string, fileName string) 
 	}
 
 	_, err = s.db.Exec(`
-		INSERT INTO files (id, fileName, ownerId ) VALUES (?, ?, ?)
+		INSERT INTO files (id, fileName, ownerId ) VALUES ($1, $2,$3)
 	`, fileId, fileName, ownerId)
 
 	return fileId, err
@@ -40,8 +41,13 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 		return nil, err
 	}
 
-	rows, err := s.db.Query("SELECT * FROM files WHERE ownerId = ?", ownerId)
+	rows, err := s.db.Query("SELECT * FROM files WHERE ownerId = $1", ownerId)
 	if err != nil {
+		fmt.Println("jup")
+		if err == sql.ErrNoRows {
+			return []File{}, nil
+		}
+
 		return nil, err
 	}
 
@@ -50,6 +56,7 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 		var f File
 		err := rows.Scan(&f.Id, &f.FileName, &f.OwnerId)
 		if err != nil {
+			fmt.Println("hers")
 			return nil, err
 		}
 
@@ -66,7 +73,7 @@ func (s storer) QueryFile(userSessionId, fileId, query string) (string, error) {
 		return "", err
 	}
 
-	rows, err := s.db.Query(`SELECT * FROM files WHERE ownerId = ? AND id = ?`, ownerId, fileId)
+	rows, err := s.db.Query(`SELECT * FROM files WHERE ownerId = $1 AND id = $2`, ownerId, fileId)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +84,7 @@ func (s storer) QueryFile(userSessionId, fileId, query string) (string, error) {
 		}
 
 		// Check if file exist and is owned by other user or if file doesn't exist.
-		rows, err = s.db.Query(`SELECT * FROM files WHERE AND id = ?`, fileId)
+		rows, err = s.db.Query(`SELECT * FROM files WHERE AND id = $1`, fileId)
 		if err != nil {
 			return "", err
 		}

@@ -46,6 +46,7 @@ class Index {
             this.files = await this.api.getAllFiles()
         } catch (err) {
             console.error(err)
+            alert("Server feil. Prøv igjen senere.")
         }
     }
 
@@ -74,7 +75,7 @@ class Index {
         // Add label for file input.
         const uploadNewFileLabelElm = document.createElement("label")
         uploadNewFileLabelElm.classList = ["fileUpload"]
-        uploadNewFileLabelElm.innerText = "Last opp en fil"
+        uploadNewFileLabelElm.innerText = "Ny fil"
         uploadNewFileLabelElm.htmlFor = "fileUpload"
         sidePanelElm.append(uploadNewFileLabelElm)
 
@@ -83,17 +84,30 @@ class Index {
         uploadNewFileInputElm.type = "file"
         uploadNewFileInputElm.id = "fileUpload"
         uploadNewFileInputElm.accept = ".txt"
+        const spinner = document.createElement("img")
+        spinner.src = "/img/spinner.gif"
+        spinner.height = "20"
+        spinner.style.visibility = "hidden"
+        uploadNewFileLabelElm.append(spinner)
         uploadNewFileInputElm.addEventListener("change", (event) => {
             const file = event.target.files[0]
             if (!file) {
                 return
             }
+            spinner.style.visibility = "visible"
+
             this.api.uploadFile(file)
                 .then(newFile => {
+                    spinner.style.visibility = "hidden"
                     if (newFile) {
-                        this.files.push(newFile)
-                        this.updateFileList()
+                        window.location.replace("/file/" + newFile.fileId)
+                        return
                     }
+
+                    alert("Filen kan ikke behandles. Prøv igjen senere")
+                }).catch(e => {
+                    console.error(e)
+                    alert("Filen kan ikke behandles. Prøv igjen senere")
                 })
 
         })
@@ -130,7 +144,7 @@ class Index {
         }
 
         const pElm = document.createElement("p")
-        pElm.innerText = "Velg eller last opp en fil for å spørre spørsmål"
+        pElm.innerText = "Velg eller last opp en fil for å spørre spørsmål."
         chatWindowElm.append(pElm)
     }
 
@@ -160,7 +174,7 @@ class Index {
 
         const sendMessageInput = document.createElement("input")
         sendMessageInput.type = "text"
-        sendMessageInput.placeholder = "Skriv melding"
+        sendMessageInput.placeholder = "Send en melding"
         chatInputContainer.append(sendMessageInput)
 
         const sendMessageSubmit = document.createElement("button")
@@ -183,7 +197,12 @@ class Index {
                 value: messageValue,
             })
 
-            this.api.doQuery(fileId, messageValue).then(message => this.addMessageToDOM(message))
+            this.api.doQuery(fileId, messageValue)
+                .then(message => this.addMessageToDOM(message))
+                .catch(err => {
+                    console.error(err)
+                    alert("Server feil. Prøv igjen senere.")
+                })
         }
 
         const submitIcon = document.createElement("img")

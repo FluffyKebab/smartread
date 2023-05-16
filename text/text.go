@@ -1,13 +1,16 @@
 package text
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tmc/langchaingo/exp/embeddings"
-	"github.com/tmc/langchaingo/exp/schema"
-	"github.com/tmc/langchaingo/exp/textSplitters"
-	"github.com/tmc/langchaingo/exp/vectorStores/pinecone"
+	"github.com/tmc/langchaingo/chains"
+	"github.com/tmc/langchaingo/embeddings"
+	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/tmc/langchaingo/textsplitter"
+	"github.com/tmc/langchaingo/vectorstores"
+	"github.com/tmc/langchaingo/vectorstores/pinecone"
 )
 
 var pineconeEnv = "us-central1-gcp"
@@ -15,7 +18,7 @@ var indexName = "database"
 var dimensions = 1536
 
 type Handler struct {
-	pineconeIndex pinecone.Pinecone
+	store vectorstores.VectorStore
 }
 
 func NewHandler() (Handler, error) {
@@ -24,32 +27,90 @@ func NewHandler() (Handler, error) {
 		return Handler{}, err
 	}
 
-	index, err := pinecone.NewPinecone(e, pineconeEnv, indexName, dimensions)
+	store, err := pinecone.New(
+		context.TODO(),
+		pinecone.WithEmbedder(e),
+		pinecone.WithIndexName("database"),
+		pinecone.WithEnvironment("us-central1-gcp"),
+		pinecone.WithProjectName("8fb28ba"),
+		pinecone.WithNameSpace("temp"),
+	)
 	if err != nil {
 		return Handler{}, err
 	}
 
 	return Handler{
-		pineconeIndex: index,
+		store: store,
 	}, nil
+
 }
 
 func (h Handler) AddFile(fileData string) (fileId string, err error) {
-
-	splitter := textSplitters.NewRecursiveCharactersSplitter()
-	docs, err := textSplitters.SplitDocuments(splitter, []schema.Document{{PageContent: fileData}})
+	e, err := embeddings.NewOpenAI()
 	if err != nil {
 		return "", err
 	}
 
-	fmt.Println("docs: ", docs)
-
 	fileId = uuid.New().String()
-	h.pineconeIndex.AddDocuments(docs, []string{}, fileId)
 
-	return fileId, nil
+	store, err := pinecone.New(
+		context.TODO(),
+		pinecone.WithEmbedder(e),
+		pinecone.WithIndexName("database"),
+		pinecone.WithEnvironment("us-central1-gcp"),
+		pinecone.WithProjectName("8fb28ba"),
+		pinecone.WithNameSpace(fileId),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	splitter := textsplitter.NewRecursiveCharacter()
+	docs, err := textsplitter.CreateDocuments(splitter, []string{fileData}, nil)
+	if err != nil {
+		return "", err
+	}
+
+	err = store.AddDocuments(context.TODO(), docs)
+
+	return fileId, err
 }
 
 func (h Handler) QueryFile(fileId string, query string) (string, error) {
-	return "wow dette er en vrldig god response", nil
+	e, err := embeddings.NewOpenAI()
+	if err != nil {
+		return "", err
+	}
+
+	fileId = uuid.New().String()
+
+	store, err := pinecone.New(
+		context.TODO(),
+		pinecone.WithEmbedder(e),
+		pinecone.WithIndexName("database"),
+		pinecone.WithEnvironment("us-central1-gcp"),
+		pinecone.WithProjectName("8fb28ba"),
+		pinecone.WithNameSpace(fileId),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	llm, err := openai.New()
+	if err != nil {
+		return "", err
+	}
+
+	docs, err := store.SimilaritySearch(context.Background(), query, 4)
+	if err != nil {
+		return "", fmt.Errorf("klarte ikke å søke i docs %w", err)
+	}
+
+	fmt.Println(docs)
+
+	return chains.Run(
+		context.TODO(),
+		chains.NewRetrievalQAFromLLM(llm, vectorstores.ToRetriever(store, 5)),
+		query,
+	)
 }

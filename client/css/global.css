@@ -52,6 +52,10 @@ html, body {
     padding: 15px 10px;
 }
 
+#sidePanel a:hover {
+    background-color: var(--side-panel-color-on-hover);
+}
+
 input[type="file"] {
     display: none;
 }
@@ -62,6 +66,13 @@ input[type="file"] {
     cursor: pointer;
     height: fit-content;
     padding: 15px 10px;
+    display: flex;
+    justify-content: space-between;
+    padding-right: 10px;
+}
+
+.fileUpload:hover {
+    background-color: var(--side-panel-color-on-hover);
 }
 
 #chatWindow {
@@ -70,6 +81,11 @@ input[type="file"] {
     justify-content: space-between;
     height: 100%;
     width: 100%;
+}
+
+#chatWindow > p {
+    margin: auto;
+    padding: 20px;
 }
 
 #chatMessageContainer {

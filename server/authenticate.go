@@ -6,21 +6,33 @@ import (
 	"time"
 )
 
-// Gets sessionId from cookie. If no sessionId exist, a new guest user is created
+// getSessionId gets the sessionId from a cookie. If no sessionId
+// exist, a new guest user will be created.
 func (s Server) getSessionId(w http.ResponseWriter, r *http.Request) (string, error) {
 	sessionCookie, err := r.Cookie("sessionId")
+	if err != nil {
+		if err != http.ErrNoCookie {
+			return "", err
+		}
+	}
+
 	if err == nil {
-		return sessionCookie.Value, nil
+		id := sessionCookie.Value
+		isValid, err := s.storer.CheckIfSessionIDIsValid(id)
+		if err != nil {
+			return "", err
+		}
+
+		if isValid {
+			return id, nil
+		}
 	}
 
-	if err != http.ErrNoCookie {
-		return "", err
-	}
-
-	//If no cookie is found the function creates a guest user
+	//If no cookie is found or the session id is invalid a guest
+	// user is created.
 	sessionId, err := s.storer.AddGuestUser()
 	if err != nil {
-		return "", fmt.Errorf("Unable to create guest user: %s", err.Error())
+		return "", fmt.Errorf("creating guest user: %w", err)
 	}
 
 	setSessionIdCookie(w, sessionId)
@@ -32,6 +44,6 @@ func setSessionIdCookie(w http.ResponseWriter, sessionId string) {
 		Name:    "sessionId",
 		Path:    "/",
 		Value:   sessionId,
-		Expires: time.Now().AddDate(5, 0, 0), // Expires in 5 years
+		Expires: time.Now().AddDate(5, 0, 0), // Expires in 5 years.
 	})
 }
