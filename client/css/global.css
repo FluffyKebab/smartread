@@ -56,6 +56,10 @@ html, body {
     background-color: var(--side-panel-color-on-hover);
 }
 
+.selectedFile {
+    font-weight: bold;
+}
+
 input[type="file"] {
     display: none;
 }

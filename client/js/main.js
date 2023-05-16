@@ -14,7 +14,7 @@ class Index {
     async homeHandler() {
         await this.getFiles()
         this.addContainers()
-        this.addSidePanel()
+        this.addSidePanel("")
         this.addHomeChatWindow()
     }
 
@@ -37,7 +37,7 @@ class Index {
         const previousMessages = this.api.getPreviousMessages(fileId, fileName)
 
         this.addContainers()
-        this.addSidePanel()
+        this.addSidePanel(fileId)
         this.addFileChatWindow(fileId, previousMessages)
     }
 
@@ -65,7 +65,7 @@ class Index {
         </div>`
     }
 
-    addSidePanel() {
+    addSidePanel(fileId) {
         const sidePanelElm = document.getElementById("sidePanel")
         if (!sidePanelElm) {
             console.error("Side panel container must be added before running addSidePanel")
@@ -117,10 +117,10 @@ class Index {
         const filesContainerElm = document.createElement("div")
         filesContainerElm.id = "fileList"
         sidePanelElm.append(filesContainerElm)
-        this.updateFileList()
+        this.updateFileList(fileId)
     }
 
-    updateFileList() {
+    updateFileList(fileId) {
         const filesContainerElm = document.getElementById("fileList")
         if (!filesContainerElm) {
             console.error("fileList container must be added before running updateFileList")
@@ -132,6 +132,10 @@ class Index {
             const fileLinkElm = document.createElement("a")
             fileLinkElm.href = "/file/" + file.id
             fileLinkElm.innerText = file.filename
+            if (file.id == fileId) {
+                fileLinkElm.classList.add("selectedFile")
+            }
+
             filesContainerElm.append(fileLinkElm)
         }
     }

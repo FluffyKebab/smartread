@@ -3,7 +3,6 @@ package storage
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 )
 
 var (
@@ -12,6 +11,7 @@ var (
 )
 
 type File struct {
+	Number   int    `json:"number"`
 	Id       string `json:"id"`
 	FileName string `json:"filename"`
 	OwnerId  int    `json:"ownerId"`
@@ -41,9 +41,8 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 		return nil, err
 	}
 
-	rows, err := s.db.Query("SELECT * FROM files WHERE ownerId = $1", ownerId)
+	rows, err := s.db.Query("SELECT * FROM files WHERE ownerId = $1 ORDER BY number DESC", ownerId)
 	if err != nil {
-		fmt.Println("jup")
 		if err == sql.ErrNoRows {
 			return []File{}, nil
 		}
@@ -54,9 +53,8 @@ func (s storer) GetAllUserFiles(userSessionId string) ([]File, error) {
 	files := make([]File, 0)
 	for rows.Next() {
 		var f File
-		err := rows.Scan(&f.Id, &f.FileName, &f.OwnerId)
+		err := rows.Scan(&f.Number, &f.Id, &f.FileName, &f.OwnerId)
 		if err != nil {
-			fmt.Println("hers")
 			return nil, err
 		}
 

@@ -68,6 +68,7 @@ func configDatabase(db *sql.DB) error {
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS files (
+			number SERIAL PRIMARY KEY, 
 			id TEXT NOT NULL, 
 			fileName TEXT NOT NULL,
 			ownerId INTEGER NOT NULL
