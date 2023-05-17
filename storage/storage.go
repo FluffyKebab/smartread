@@ -7,14 +7,18 @@ import (
 	"os"
 	"smartread/text"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/lib/pq"
 )
 
 var ErrEnvNotSet = errors.New("environment variable not set")
 
 const (
 	_postgresPasswordEnvVar = "POSTGRES_PASSWORD"
-	_postgresNameEnvVar     = "POSTGRES_NAME"
+	_postgresNameEnvVar     = "POSTGRES_DB"
+	_postgresUserEnvVar     = "POSTGRES_USER"
+	_postgresHostEnvVar     = "POSTGRES_HOST"
+
+	_port = 5432
 )
 
 type Storer interface {
@@ -42,11 +46,26 @@ func New() (Storer, error) {
 	}
 
 	name := os.Getenv(_postgresNameEnvVar)
-	if password == "" {
+	if name == "" {
 		return nil, fmt.Errorf("%w: %s", ErrEnvNotSet, _postgresNameEnvVar)
 	}
 
-	db, err := sql.Open("pgx", fmt.Sprintf("postgres://postgres:%s@localhost:5432/%s", password, name))
+	user := os.Getenv(_postgresUserEnvVar)
+	if user == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEnvNotSet, _postgresUserEnvVar)
+	}
+
+	host := os.Getenv(_postgresHostEnvVar)
+	if host == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEnvNotSet, _postgresHostEnvVar)
+	}
+
+	psqlInfo := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, _port, user, password, name,
+	)
+
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}

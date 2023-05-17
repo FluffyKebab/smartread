@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    networks:
+      - learning
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+
+  server: 
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+    depends_on:
+      - db
+    networks:
+      - learning
+    restart: on-failure
+
+volumes:
+  postgres-db:
+
+networks:
+  learning:
+    driver: bridge
