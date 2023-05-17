@@ -5,7 +5,6 @@ import (
 	"smartread/server"
 )
 
-// Main function creates and runs server
 func main() {
 	server, err := server.New()
 	if err != nil {

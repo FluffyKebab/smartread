@@ -1,14 +1,20 @@
 package storage
 
-// To start the database in a docker run:
-// docker run --rm --name database -p 5432:5432 -e POSTGRES_PASSWORD=123456789 -e POSTGRES_DB=database postgres
-
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"os"
 	"smartread/text"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
+)
+
+var ErrEnvNotSet = errors.New("environment variable not set")
+
+const (
+	_postgresPasswordEnvVar = "POSTGRES_PASSWORD"
+	_postgresNameEnvVar     = "POSTGRES_NAME"
 )
 
 type Storer interface {
@@ -29,7 +35,17 @@ type storer struct {
 
 var _ storer = storer{}
 
-func New(name, password string) (Storer, error) {
+func New() (Storer, error) {
+	password := os.Getenv(_postgresPasswordEnvVar)
+	if password == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEnvNotSet, _postgresPasswordEnvVar)
+	}
+
+	name := os.Getenv(_postgresNameEnvVar)
+	if password == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEnvNotSet, _postgresNameEnvVar)
+	}
+
 	db, err := sql.Open("pgx", fmt.Sprintf("postgres://postgres:%s@localhost:5432/%s", password, name))
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)

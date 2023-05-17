@@ -100,7 +100,7 @@ func (h Handler) QueryFile(fileId string, query string) (string, error) {
 
 	return chains.Run(
 		context.TODO(),
-		chains.NewRetrievalQAFromLLM(llm, vectorstores.ToRetriever(store, 2)),
+		chains.NewRetrievalQAFromLLM(llm, vectorstores.ToRetriever(store, 3)),
 		query,
 	)
 }

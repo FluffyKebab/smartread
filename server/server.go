@@ -18,7 +18,7 @@ type Server struct {
 
 func New() (Server, error) {
 	r := mux.NewRouter()
-	s, err := storage.New("database", "123456789")
+	s, err := storage.New()
 	if err != nil {
 		return Server{}, err
 	}
